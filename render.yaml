@@ -1,0 +1,54 @@
+# Render Blueprint: two free web services (Bifrost gateway + Yatharth backend that also serves the page).
+services:
+  - type: web
+    name: yatharth-bifrost
+    runtime: docker
+    plan: free
+    dockerfilePath: ./bifrost/Dockerfile
+    dockerContext: ./bifrost
+    envVars:
+      - key: PORT
+        value: "8080"
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: BIFROST_ADMIN_USERNAME
+        sync: false
+      - key: BIFROST_ADMIN_PASSWORD
+        sync: false
+      - key: BIFROST_VIRTUAL_KEY
+        sync: false
+      - key: BIFROST_ENCRYPTION_KEY
+        generateValue: true
+      - key: BIFROST_SETUP_TOKEN
+        generateValue: true
+
+  - type: web
+    name: yatharth
+    runtime: python
+    plan: free
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: BIFROST_BASE_URL
+        sync: false
+      - key: BIFROST_API_KEY
+        sync: false
+      - key: EXTRACT_MODEL
+        sync: false
+      - key: JUDGE_MODEL
+        sync: false
+      - key: VISION_MODEL
+        sync: false
+      - key: LLM_TIMEOUT
+        value: "90"
+      - key: MAX_CHECK
+        value: "5"
+      - key: RATE_LIMIT_PER_10MIN
+        value: "12"
+      - key: DAILY_CAP
+        value: "300"

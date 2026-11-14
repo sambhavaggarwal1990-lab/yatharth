@@ -1,0 +1,40 @@
+{
+  "$schema": "https://www.getbifrost.ai/schema",
+  "encryption_key": "env.BIFROST_ENCRYPTION_KEY",
+  "setup_token": "env.BIFROST_SETUP_TOKEN",
+  "client": {
+    "enable_logging": true,
+    "enforce_auth_on_inference": true
+  },
+  "config_store": {
+    "enabled": true,
+    "type": "sqlite",
+    "config": { "path": "./config.db" }
+  },
+  "providers": {
+    "gemini": {
+      "keys": [
+        { "name": "gemini-primary", "value": "env.GEMINI_API_KEY", "models": ["*"], "weight": 1.0 }
+      ]
+    }
+  },
+  "governance": {
+    "auth_config": {
+      "is_enabled": true,
+      "admin_username": "env.BIFROST_ADMIN_USERNAME",
+      "admin_password": "env.BIFROST_ADMIN_PASSWORD",
+      "disable_auth_on_inference": false
+    },
+    "virtual_keys": [
+      {
+        "id": "vk-yatharth",
+        "name": "yatharth-backend",
+        "value": "env.BIFROST_VIRTUAL_KEY",
+        "is_active": true,
+        "provider_configs": [
+          { "provider": "gemini", "allowed_models": ["*"], "key_ids": ["*"], "weight": 1 }
+        ]
+      }
+    ]
+  }
+}
