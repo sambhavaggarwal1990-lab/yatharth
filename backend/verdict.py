@@ -23,7 +23,7 @@ def judge(answer: str, claims: list[dict], evidence: dict) -> dict:
     data = ask_json(JUDGE_MODEL, SYSTEM.replace("{today}", date.today().isoformat()), payload)
 
     verdicts = {}
-    for v in data.get("verdicts", []):
+    for v in (data if isinstance(data, list) else data.get("verdicts", [])):
         cid = v.get("id")
         if cid not in evidence:
             continue
@@ -34,7 +34,7 @@ def judge(answer: str, claims: list[dict], evidence: dict) -> dict:
             "corrected": v.get("corrected") or None,
             "evidence": ev,
         }
-    return {"verdicts": verdicts, "corrected_answer": data.get("corrected_answer") or answer}
+    return {"verdicts": verdicts, "corrected_answer": (data.get("corrected_answer") if isinstance(data, dict) else None) or answer}
 
 
 def freshness_score(claims: list[dict]) -> int:
