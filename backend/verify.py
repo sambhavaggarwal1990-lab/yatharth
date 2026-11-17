@@ -51,6 +51,24 @@ def _search(claim: dict) -> list[dict]:
     ]
 
 
+def fetch_page_text(url: str) -> str:
+    """Read a web page with Tavily Extract so Yatharth can audit it for stale facts."""
+    from tavily import TavilyClient
+
+    key = os.getenv("TAVILY_API_KEY")
+    if not key:
+        raise RuntimeError("TAVILY_API_KEY is not set (see .env.example)")
+    t0 = time.time()
+    print(f"[tavily] extracting: {url}", flush=True)
+    res = TavilyClient(api_key=key).extract(urls=[url])
+    items = res.get("results") or []
+    text = ((items[0].get("raw_content") if items else "") or "").strip()
+    print(f"[tavily] extracted {len(text)} chars in {time.time() - t0:.1f}s", flush=True)
+    if not text:
+        raise ValueError("Could not read that page. Try another link, or paste the text instead.")
+    return text
+
+
 def verify_claims(claims: list[dict]) -> dict[int, list[dict]]:
     """Search the web for each risky claim, in parallel. Returns {claim_id: [evidence, ...]}."""
     with ThreadPoolExecutor(max_workers=6) as pool:

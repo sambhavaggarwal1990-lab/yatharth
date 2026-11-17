@@ -40,6 +40,13 @@ def ask_json(model: str, system: str, user: str) -> dict:
     return json.loads(text)
 
 
+def answer_question(question: str) -> str:
+    """Ask mode: get an answer from the model, which Yatharth then fact-checks."""
+    system = ("Answer the question clearly in at most 120 words, in the same language as the question. "
+              "Give specific facts (prices, versions, dates, numbers) as you know them.")
+    return _chat(JUDGE_MODEL, [{"role": "system", "content": system}, {"role": "user", "content": question}])
+
+
 def read_image(b64: str, mime: str) -> str:
     """Transcribe the text in an image (e.g. a screenshot of an AI chat) with a vision model."""
     prompt = ("Transcribe all text in this image exactly. If it is a screenshot of an AI chat, transcribe the AI's answer. "

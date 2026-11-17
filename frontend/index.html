@@ -71,6 +71,36 @@ canvas{display:block;position:fixed;inset:0;width:100vw;height:100vh}
 #ex button:hover,#ex button:focus-visible{box-shadow:0 0 16px rgba(255,170,50,.5);outline:0}
 #skipi{position:fixed;top:16px;right:18px;z-index:5;background:none;border:0;color:rgba(255,215,122,.85);font-family:"Cinzel",serif;letter-spacing:.2em;font-size:13px;text-transform:uppercase;cursor:pointer}
 #skipi[hidden]{display:none}
+#modes{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+#modes button{font-family:"Cinzel",serif;font-size:13px;letter-spacing:.06em;color:#fdf1d6;background:transparent;border:1px solid rgba(242,185,71,.35);border-radius:10px;padding:8px 16px;cursor:pointer}
+#modes button.on{background:rgba(242,185,71,.22);border-color:#f2b947;box-shadow:0 0 14px rgba(255,170,50,.35)}
+#tools{position:fixed;top:14px;left:16px;z-index:10;display:none;gap:8px;flex-wrap:wrap;max-width:calc(100vw - 90px)}
+#tools.on{display:flex}
+#tools button,#hist button,#trmenu button,#modes select,#modes #mic{font-family:"Cinzel",serif;letter-spacing:.05em;cursor:pointer}
+#tools button{font-size:12px;color:#ffe9b0;background:rgba(8,10,28,.78);border:1px solid rgba(242,185,71,.45);border-radius:10px;padding:7px 12px;backdrop-filter:blur(6px)}
+#tools button:hover{border-color:#f2b947;box-shadow:0 0 12px rgba(255,170,50,.35)}
+#tools .r{display:none}#tools.rep .r{display:inline-block}
+#hist,#trmenu{position:fixed;top:56px;left:16px;z-index:11;background:rgba(5,7,20,.97);border:1px solid rgba(242,185,71,.5);border-radius:14px;color:#eceaf5;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+#hist[hidden],#trmenu[hidden]{display:none}
+#hist{width:min(380px,92vw);max-height:70vh;overflow:auto;padding:12px}
+#hist .ht{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;color:#ffd77a}
+#hist .ht button{font-size:11px;background:none;border:1px solid rgba(242,185,71,.4);color:#ffe9b0;border-radius:8px;padding:4px 10px}
+#hist p{color:#a9aec8;margin:6px 2px}
+#hist .hi{display:flex;gap:6px;margin-bottom:6px}
+#hist .hi>button:first-child{flex:1;text-align:left;display:grid;grid-template-columns:44px 1fr;gap:2px 10px;align-items:center;background:rgba(14,18,44,.8);border:1px solid #2a2f55;border-radius:10px;color:#eceaf5;padding:8px 10px;font-family:inherit;letter-spacing:0}
+#hist .hi>button:first-child:hover{border-color:#f2b947}
+#hist .sc{grid-row:span 2;font-weight:700;font-size:20px;color:#ffd77a;text-align:center}
+#hist .tx{font-size:14px}#hist small{color:#8d93b5;font-size:12px}
+#hist .x{background:none;border:1px solid #2a2f55;border-radius:10px;color:#a9aec8;width:34px;font-size:18px;letter-spacing:0}
+#trmenu{padding:8px;display:grid;grid-template-columns:repeat(2,1fr);gap:6px;width:min(300px,92vw)}
+#trmenu button{font-size:12px;color:#ffe9b0;background:rgba(14,18,44,.8);border:1px solid #2a2f55;border-radius:8px;padding:8px}
+#trmenu button:hover{border-color:#f2b947}
+#modes select{background:#0b0f26;color:#fdf1d6;border:1px solid rgba(242,185,71,.35);border-radius:10px;padding:8px 10px;font-size:13px}
+#modes #mic{font-size:13px;color:#fdf1d6;background:transparent;border:1px solid rgba(242,185,71,.35);border-radius:10px;padding:8px 16px}
+#modes #mic.live{background:rgba(255,90,70,.25);border-color:#ff7a59}
+#toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:12;background:rgba(5,7,20,.97);border:1px solid rgba(242,185,71,.6);color:#ffe9b0;border-radius:999px;padding:10px 20px;font:14px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:0;pointer-events:none;transition:opacity .25s}
+#toast.on{opacity:1}
+
 </style>
 </head>
 <body>
@@ -475,13 +505,21 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 let timer=null,busy=false,lastQ="";
 
 pfile.accept="."+OK.join(",.");
-for(const [n,t] of Object.entries(EX)){const b=document.createElement("button");b.type="button";b.textContent=n;b.onclick=()=>{ptext.value=t;ptext.focus()};$("#ex").appendChild(b)}
+const ASK={"Price of ChatGPT Plus":"What is the price of ChatGPT Plus per month?","Latest Python":"What is the latest stable version of Python?","India GST slabs":"What are the GST slabs in India?"};
+let mode="check";
+const MODES=[["check","Check an answer","Paste an AI answer, a web link, or attach a file…"],["ask","Ask a question","Ask anything. We get the AI's answer and check it for freshness…"]];
+function renderEx(){const ex=$("#ex");ex.innerHTML="";for(const [n,t] of Object.entries(mode==="ask"?ASK:EX)){const b=document.createElement("button");b.type="button";b.textContent=n;b.onclick=()=>{ptext.value=t;ptext.focus()};ex.appendChild(b)}}
+const mrow=document.createElement("div");mrow.id="modes";
+for(const [id,label,ph] of MODES){const b=document.createElement("button");b.type="button";b.textContent=label;b.dataset.m=id;b.onclick=()=>{mode=id;ptext.placeholder=ph;ptext.setAttribute("aria-label",ph);mrow.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x.dataset.m===id));renderEx();ptext.focus()};mrow.appendChild(b)}
+$("#ex").before(mrow);mrow.firstChild.classList.add("on");ptext.placeholder=MODES[0][2];renderEx();
 
 /* intro: Skip button, and the intro plays only once per browser tab session */
 let seen=false;try{seen=!!sessionStorage.getItem("yatharth_intro")}catch(e){}
+const hasShare=/^#r=/.test(location.hash);if(hasShare)seen=true;
 cont.addEventListener("click",()=>{try{sessionStorage.setItem("yatharth_intro","1")}catch(e){}skip.hidden=true});
 skip.addEventListener("click",()=>cont.click());
 if(seen){skip.hidden=true;$("#aud").muted=true;setTimeout(()=>cont.click(),300)}
+if(hasShare)setTimeout(()=>loadShared().then(r=>{if(r)showReport(r)}),900);
 
 function bot(text,cls){const m=document.createElement("div");m.className="msg bot "+(cls||"");m.textContent=text;sent.appendChild(m);sent.scrollTop=sent.scrollHeight;return m}
 function problem(files){
@@ -493,19 +531,20 @@ function problem(files){
 function restore(text,files){ptext.value=text;if(files.length){const dt=new DataTransfer();files.forEach(f=>dt.items.add(f));pfile.files=dt.files;pfile.dispatchEvent(new Event("change"))}}
 
 window.addEventListener("yatharth-prompt",async e=>{
-  const {text,files}=e.detail;
+  const {text,files}=e.detail;const isUrl=!files.length&&/^https?:\/\/\S+$/i.test(text);
   if(busy){restore(text,files);return}
   const bad=problem(files);if(bad){bot(bad,"err");restore(text,files);return}
-  if(!files.length&&text.length<10){bot("Paste a longer answer (at least 10 characters) or attach a file.","err");restore(text,files);return}
+  if(!files.length&&!isUrl&&text.length<(mode==="ask"?3:10)){bot(mode==="ask"?"Type your question first.":"Paste a longer answer (at least 10 characters), a link, or attach a file.","err");restore(text,files);return}
   busy=true;$("#psend").disabled=true;
-  lastQ=(text||("Attached: "+files.map(f=>f.name).join(", "))).slice(0,300);
+  lastQ=(isUrl?"Page: "+text:(text||("Attached: "+files.map(f=>f.name).join(", ")))).slice(0,300);
   const t0=Date.now(),m=bot("Checking… 0s");
   timer=setInterval(()=>{m.textContent=`Checking… ${Math.round((Date.now()-t0)/1000)}s (usually under a minute)`},1000);
   const ctl=new AbortController(),kill=setTimeout(()=>ctl.abort(),120000);
   try{
     let r;
     if(files.length){const fd=new FormData();fd.append("answer_text",text);files.forEach(f=>fd.append("files",f));r=await fetch(API+"/api/check-files",{method:"POST",body:fd,signal:ctl.signal})}
-    else r=await fetch(API+"/api/check",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({answer_text:text}),signal:ctl.signal});
+    else{const ep=isUrl?"/api/check-url":mode==="ask"?"/api/ask":"/api/check",bd=isUrl?{url:text}:mode==="ask"?{question:text}:{answer_text:text};
+      r=await fetch(API+ep,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(bd),signal:ctl.signal})}
     const d=await r.json();
     if(!r.ok)throw new Error(typeof d.detail==="string"?d.detail:"Request failed");
     m.textContent=`Freshness ${d.freshness_score}/100. Tap to open the report.`;m.classList.add("link");m.onclick=()=>show(d);show(d);
@@ -515,8 +554,19 @@ window.addEventListener("yatharth-prompt",async e=>{
   }finally{clearInterval(timer);clearTimeout(kill);busy=false;$("#psend").disabled=false}
 });
 
-/* The report screen is your own design: yatharth-report.html, shown full-screen in an iframe. */
-let frame=null,frameReady=false,pending=null;
+/* ===== Toolbar: new chat, history, translate, share. Voice input. Report screen. ===== */
+const tb=document.createElement("div");tb.id="tools";
+tb.innerHTML='<button type="button" id="tNew">New chat</button><button type="button" id="tHist">History</button><button type="button" id="tTr" class="r">Translate</button><button type="button" id="tSh" class="r">Share</button>';
+document.body.appendChild(tb);
+const hist=document.createElement("div");hist.id="hist";hist.hidden=true;document.body.appendChild(hist);
+const trm=document.createElement("div");trm.id="trmenu";trm.hidden=true;document.body.appendChild(trm);
+const toastEl=document.createElement("div");toastEl.id="toast";document.body.appendChild(toastEl);
+let toastT=null;
+function toast(msg,keep){toastEl.textContent=msg;toastEl.classList.add("on");clearTimeout(toastT);if(!keep)toastT=setTimeout(()=>toastEl.classList.remove("on"),2400)}
+cont.addEventListener("click",()=>tb.classList.add("on"));
+
+/* ---- the report screen (your own design in yatharth-report.html, shown full-screen in an iframe) ---- */
+let frame=null,frameReady=false,pending=null,origRep=null,trCache={};
 function toReport(d,q){
   return{question:q,score:d.freshness_score,checkedOn:d.checked_on,correctedAnswer:d.corrected_answer,
     claims:d.claims.map(c=>({status:c.verdict,category:c.category?c.category.charAt(0).toUpperCase()+c.category.slice(1):"",
@@ -525,18 +575,121 @@ function toReport(d,q){
 function send(){
   frame.contentWindow.postMessage({type:"yatharth:report",report:pending},"*");
   setTimeout(()=>{frame.style.visibility="visible";frame.focus()},250)}   /* stays hidden until the data is drawn */
-function show(d){
-  pending=toReport(d,lastQ);
+function showReport(rep,isNew=true){
+  pending=rep;if(isNew){origRep=rep;trCache={}}
+  tb.classList.add("on","rep");
   if(!frame){
     frame=document.createElement("iframe");frame.src="yatharth-report.html";frame.title="Yatharth report";
     frame.style.cssText="position:fixed;inset:0;width:100%;height:100%;border:0;z-index:9;background:#02040b;visibility:hidden";
     frame.onload=()=>{frameReady=true;send()};
     document.body.appendChild(frame)}
   else if(frameReady)send()}
-function hide(){if(frame)frame.style.visibility="hidden";ptext.focus()}
+function show(d){const rep=toReport(d,lastQ);saveHistory(rep);showReport(rep)}
+function hide(){if(frame)frame.style.visibility="hidden";tb.classList.remove("rep");hist.hidden=true;trm.hidden=true;ptext.focus()}
 addEventListener("message",e=>{
   const ty=e.data&&e.data.type;
   if(frame&&e.source===frame.contentWindow&&(ty==="yatharth:report-close"||ty==="yatharth:check-another"))hide()});
+
+/* ---- history (saved in this browser only) ---- */
+const HK="yatharth_history";
+const loadH=()=>{try{return JSON.parse(localStorage.getItem(HK)||"[]")}catch(e){return[]}};
+function saveHistory(rep){try{const h=loadH();h.unshift({t:Date.now(),q:rep.question||"",s:rep.score,rep});localStorage.setItem(HK,JSON.stringify(h.slice(0,20)))}catch(e){}}
+function drawHist(){
+  const h=loadH();hist.textContent="";
+  const top=document.createElement("div");top.className="ht";
+  const t=document.createElement("b");t.textContent="History";
+  const clr=document.createElement("button");clr.type="button";clr.textContent="Clear all";
+  clr.onclick=()=>{try{localStorage.removeItem(HK)}catch(e){}drawHist()};
+  top.append(t,clr);hist.appendChild(top);
+  if(!h.length){const p=document.createElement("p");p.textContent="No checks yet.";hist.appendChild(p);return}
+  h.forEach((it,i)=>{
+    const row=document.createElement("div");row.className="hi";
+    const b=document.createElement("button");b.type="button";
+    const sc=document.createElement("span");sc.className="sc";sc.textContent=it.s;
+    const tx=document.createElement("span");tx.className="tx";tx.textContent=(it.q||"Untitled check").slice(0,90);
+    const dt=document.createElement("small");dt.textContent=new Date(it.t).toLocaleString();
+    b.append(sc,tx,dt);b.onclick=()=>{hist.hidden=true;showReport(it.rep)};
+    const x=document.createElement("button");x.type="button";x.className="x";x.textContent="\u00d7";x.setAttribute("aria-label","Delete");
+    x.onclick=()=>{const a=loadH();a.splice(i,1);try{localStorage.setItem(HK,JSON.stringify(a))}catch(e){}drawHist()};
+    row.append(b,x);hist.appendChild(row)})}
+
+/* ---- share: the report is packed into the link itself, so no server storage is needed ---- */
+async function enc(rep){
+  const bytes=new TextEncoder().encode(JSON.stringify(rep));let pre="u.",buf=bytes;
+  if(window.CompressionStream){try{const cs=new CompressionStream("gzip"),w=cs.writable.getWriter();w.write(bytes);w.close();buf=new Uint8Array(await new Response(cs.readable).arrayBuffer());pre="z."}catch(e){}}
+  let s="";buf.forEach(b=>s+=String.fromCharCode(b));
+  return pre+btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}
+async function dec(str){
+  const pre=str.slice(0,2),b=str.slice(2).replace(/-/g,"+").replace(/_/g,"/");
+  let buf=Uint8Array.from(atob(b+"=".repeat((4-b.length%4)%4)),c=>c.charCodeAt(0));
+  if(pre==="z."){const ds=new DecompressionStream("gzip"),w=ds.writable.getWriter();w.write(buf);w.close();buf=new Uint8Array(await new Response(ds.readable).arrayBuffer())}
+  return JSON.parse(new TextDecoder().decode(buf))}
+const S=(v,n=2000)=>String(v??"").slice(0,n);
+function clean(r){   /* never trust data that arrives in a link */
+  return{question:S(r.question,300),score:Math.max(0,Math.min(100,Number(r.score)||0)),checkedOn:S(r.checkedOn,20),correctedAnswer:S(r.correctedAnswer,4000),
+    claims:(Array.isArray(r.claims)?r.claims:[]).slice(0,30).map(c=>({status:["fresh","stale","unverified","not_checked"].includes(c.status)?c.status:"unverified",
+      category:S(c.category,40),claim:S(c.claim),explanation:S(c.explanation),correct:S(c.correct),
+      sources:(Array.isArray(c.sources)?c.sources:[]).slice(0,5).map(s=>({type:S(s.type,40),title:S(s.title,200),url:/^https?:\/\//.test(s.url)?S(s.url,1000):""}))}))}}
+async function loadShared(){
+  const m=location.hash.match(/^#r=([zu]\.[A-Za-z0-9_-]+)$/);if(!m)return null;
+  try{return clean(await dec(m[1]))}catch(e){return null}}
+async function share(){
+  if(!pending)return;
+  const url=location.href.split("#")[0]+"#r="+await enc(pending);
+  try{if(navigator.share){await navigator.share({title:"Yatharth report",text:"Yatharth freshness check: "+pending.score+"/100",url});return}}catch(e){if(e&&e.name==="AbortError")return}
+  try{await navigator.clipboard.writeText(url);toast("Link copied")}catch(e){window.prompt("Copy this link:",url)}}
+
+/* ---- translate the report (backend asks the model through Bifrost) ---- */
+const LANGS=[["Original",null],["English","English"],["Hindi","Hindi"],["Hinglish","Hinglish (Hindi written in English letters)"],["Bengali","Bengali"],["Tamil","Tamil"],["Telugu","Telugu"],["Marathi","Marathi"],["Gujarati","Gujarati"],["Spanish","Spanish"],["French","French"],["German","German"]];
+for(const [label,target] of LANGS){const b=document.createElement("button");b.type="button";b.textContent=label;b.onclick=()=>doTranslate(label,target);trm.appendChild(b)}
+async function doTranslate(label,target){
+  trm.hidden=true;if(!origRep)return;
+  if(!target){showReport(origRep,false);return}
+  if(trCache[label]){showReport(trCache[label],false);return}
+  const clone=JSON.parse(JSON.stringify(origRep)),slots=[],add=(o,k)=>{if(o[k])slots.push([o,k])};
+  add(clone,"question");add(clone,"correctedAnswer");
+  clone.claims.forEach(c=>["claim","explanation","correct","category"].forEach(k=>add(c,k)));
+  if(!slots.length)return;
+  toast("Translating to "+label+"…",true);
+  try{
+    const r=await fetch(API+"/api/translate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({target,texts:slots.map(([o,k])=>o[k])})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(typeof d.detail==="string"?d.detail:"Translation failed");
+    slots.forEach(([o,k],i)=>{o[k]=String(d.texts[i]??o[k])});
+    trCache[label]=clone;showReport(clone,false);toast("Translated to "+label)
+  }catch(e){toast(e.message==="Failed to fetch"?"Cannot reach the backend.":e.message)}}
+
+/* ---- new chat ---- */
+function newChat(){
+  if(busy){toast("Please wait for the current check to finish.");return}
+  hide();sent.innerHTML="";ptext.value="";
+  [...document.querySelectorAll("#chips button")].reverse().forEach(b=>b.click());   /* removes attached files */
+  origRep=null;pending=null;trCache={};mrow.firstChild.click();toast("New chat")}
+
+/* ---- voice input (transcribe): uses the browser's speech recognition, works in Chrome and Edge ---- */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+const mic=document.createElement("button");mic.type="button";mic.id="mic";mic.textContent="Speak";
+const vl=document.createElement("select");vl.setAttribute("aria-label","Voice language");
+for(const [v,l] of [["en-IN","English"],["hi-IN","Hindi"],["en-US","English (US)"]]){const o=document.createElement("option");o.value=v;o.textContent=l;vl.appendChild(o)}
+mrow.append(mic,vl);
+let rec=null,base="";
+mic.onclick=()=>{
+  if(!SR){bot("Voice input works in Chrome or Edge. Please open Yatharth in one of them.","err");return}
+  if(rec){rec.stop();return}
+  rec=new SR();rec.lang=vl.value;rec.interimResults=true;rec.continuous=true;
+  base=ptext.value?ptext.value.trimEnd()+" ":"";
+  rec.onresult=e=>{let t="";for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;ptext.value=base+t};
+  rec.onend=()=>{rec=null;mic.classList.remove("live");mic.textContent="Speak"};
+  rec.onerror=e=>bot(e.error==="not-allowed"?"Microphone is blocked. Allow it from the lock icon in the address bar.":"Voice input stopped ("+e.error+").","err");
+  mic.classList.add("live");mic.textContent="Stop";rec.start()};
+
+/* ---- toolbar wiring ---- */
+$("#tNew").onclick=newChat;$("#tSh").onclick=share;
+$("#tHist").onclick=()=>{trm.hidden=true;hist.hidden=!hist.hidden;if(!hist.hidden)drawHist()};
+$("#tTr").onclick=()=>{hist.hidden=true;trm.hidden=!trm.hidden};
+document.addEventListener("click",e=>{
+  if(!hist.contains(e.target)&&e.target.id!=="tHist")hist.hidden=true;
+  if(!trm.contains(e.target)&&e.target.id!=="tTr")trm.hidden=true});
 })();
 </script>
 </body>
