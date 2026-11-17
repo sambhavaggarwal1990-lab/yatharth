@@ -71,12 +71,9 @@ canvas{display:block;position:fixed;inset:0;width:100vw;height:100vh}
 #ex button:hover,#ex button:focus-visible{box-shadow:0 0 16px rgba(255,170,50,.5);outline:0}
 #skipi{position:fixed;top:16px;right:18px;z-index:5;background:none;border:0;color:rgba(255,215,122,.85);font-family:"Cinzel",serif;letter-spacing:.2em;font-size:13px;text-transform:uppercase;cursor:pointer}
 #skipi[hidden]{display:none}
-#modes{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-#modes button{font-family:"Cinzel",serif;font-size:13px;letter-spacing:.06em;color:#fdf1d6;background:transparent;border:1px solid rgba(242,185,71,.35);border-radius:10px;padding:8px 16px;cursor:pointer}
-#modes button.on{background:rgba(242,185,71,.22);border-color:#f2b947;box-shadow:0 0 14px rgba(255,170,50,.35)}
 #tools{position:fixed;top:14px;left:16px;z-index:10;display:none;gap:8px;flex-wrap:wrap;max-width:calc(100vw - 90px)}
 #tools.on{display:flex}
-#tools button,#hist button,#trmenu button,#modes select,#modes #mic{font-family:"Cinzel",serif;letter-spacing:.05em;cursor:pointer}
+#tools button,#hist button,#trmenu button{font-family:"Cinzel",serif;letter-spacing:.05em;cursor:pointer}
 #tools button{font-size:12px;color:#ffe9b0;background:rgba(8,10,28,.78);border:1px solid rgba(242,185,71,.45);border-radius:10px;padding:7px 12px;backdrop-filter:blur(6px)}
 #tools button:hover{border-color:#f2b947;box-shadow:0 0 12px rgba(255,170,50,.35)}
 #tools .r{display:none}#tools.rep .r{display:inline-block}
@@ -95,11 +92,15 @@ canvas{display:block;position:fixed;inset:0;width:100vw;height:100vh}
 #trmenu{padding:8px;display:grid;grid-template-columns:repeat(2,1fr);gap:6px;width:min(300px,92vw)}
 #trmenu button{font-size:12px;color:#ffe9b0;background:rgba(14,18,44,.8);border:1px solid #2a2f55;border-radius:8px;padding:8px}
 #trmenu button:hover{border-color:#f2b947}
-#modes select{background:#0b0f26;color:#fdf1d6;border:1px solid rgba(242,185,71,.35);border-radius:10px;padding:8px 10px;font-size:13px}
-#modes #mic{font-size:13px;color:#fdf1d6;background:transparent;border:1px solid rgba(242,185,71,.35);border-radius:10px;padding:8px 16px}
-#modes #mic.live{background:rgba(255,90,70,.25);border-color:#ff7a59}
 #toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:12;background:rgba(5,7,20,.97);border:1px solid rgba(242,185,71,.6);color:#ffe9b0;border-radius:999px;padding:10px 20px;font:14px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:0;pointer-events:none;transition:opacity .25s}
 #toast.on{opacity:1}
+#prompt{padding-top:64px}
+#mic{flex:none;width:44px;height:44px;margin-bottom:2px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#ffd77a;background:rgba(40,28,10,.55);border:1px solid rgba(242,185,71,.6);box-shadow:0 0 12px rgba(255,160,40,.25);transition:box-shadow .2s,transform .2s}
+#mic svg{width:21px;height:21px}
+#mic:hover,#mic:focus-visible{box-shadow:0 0 20px rgba(255,170,50,.6);transform:scale(1.06);outline:0}
+#mic.live{color:#fff;background:rgba(255,90,70,.4);border-color:#ff7a59;animation:micp 1.2s infinite}
+@keyframes micp{0%,100%{box-shadow:0 0 0 0 rgba(255,90,70,.55)}50%{box-shadow:0 0 0 10px rgba(255,90,70,0)}}
+@media (max-width:560px){#tools button{font-size:11px;padding:6px 9px}}
 
 </style>
 </head>
@@ -505,13 +506,14 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 let timer=null,busy=false,lastQ="";
 
 pfile.accept="."+OK.join(",.");
-const ASK={"Price of ChatGPT Plus":"What is the price of ChatGPT Plus per month?","Latest Python":"What is the latest stable version of Python?","India GST slabs":"What are the GST slabs in India?"};
-let mode="check";
-const MODES=[["check","Check an answer","Paste an AI answer, a web link, or attach a file…"],["ask","Ask a question","Ask anything. We get the AI's answer and check it for freshness…"]];
-function renderEx(){const ex=$("#ex");ex.innerHTML="";for(const [n,t] of Object.entries(mode==="ask"?ASK:EX)){const b=document.createElement("button");b.type="button";b.textContent=n;b.onclick=()=>{ptext.value=t;ptext.focus()};ex.appendChild(b)}}
-const mrow=document.createElement("div");mrow.id="modes";
-for(const [id,label,ph] of MODES){const b=document.createElement("button");b.type="button";b.textContent=label;b.dataset.m=id;b.onclick=()=>{mode=id;ptext.placeholder=ph;ptext.setAttribute("aria-label",ph);mrow.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x.dataset.m===id));renderEx();ptext.focus()};mrow.appendChild(b)}
-$("#ex").before(mrow);mrow.firstChild.classList.add("on");ptext.placeholder=MODES[0][2];renderEx();
+const ALL=Object.assign({},EX,{"ChatGPT Plus price":"What is the price of ChatGPT Plus per month?"});
+ptext.placeholder="Ask a question, paste an AI answer or a link, or attach a file…";
+ptext.setAttribute("aria-label","Ask a question, paste an AI answer or a link, or attach a file");
+for(const [n,v] of Object.entries(ALL)){const b=document.createElement("button");b.type="button";b.textContent=n;b.onclick=()=>{ptext.value=v;ptext.focus()};$("#ex").appendChild(b)}
+/* Yatharth decides by itself: a question is answered by the AI first and then checked; anything else is checked as it is. */
+const QW=/^(what|who|whom|whose|when|where|which|why|how|is|are|was|were|can|could|will|would|do|does|did|should|kya|kaun|kab|kahan|kaise|kitna|kitni|kitne|kyun|kyu|konsa|kaunsa)(\s|$)/i;
+const QH=/^(\u0915\u094d\u092f\u093e|\u0915\u094c\u0928|\u0915\u092c|\u0915\u0939\u093e\u0901|\u0915\u0939\u093e\u0902|\u0915\u0948\u0938\u0947|\u0915\u093f\u0924\u0928\u093e|\u0915\u093f\u0924\u0928\u0940|\u0915\u093f\u0924\u0928\u0947|\u0915\u094d\u092f\u094b\u0902)(\s|$)/;
+function looksLikeQuestion(s){s=s.trim();if(s.length>250||/\n/.test(s))return false;return /[?\uff1f]\s*$/.test(s)||((QW.test(s)||QH.test(s))&&!/[.!]\s+\S/.test(s))}
 
 /* intro: Skip button, and the intro plays only once per browser tab session */
 let seen=false;try{seen=!!sessionStorage.getItem("yatharth_intro")}catch(e){}
@@ -531,19 +533,20 @@ function problem(files){
 function restore(text,files){ptext.value=text;if(files.length){const dt=new DataTransfer();files.forEach(f=>dt.items.add(f));pfile.files=dt.files;pfile.dispatchEvent(new Event("change"))}}
 
 window.addEventListener("yatharth-prompt",async e=>{
-  const {text,files}=e.detail;const isUrl=!files.length&&/^https?:\/\/\S+$/i.test(text);
+  const {text,files}=e.detail;const isUrl=!files.length&&/^https?:\/\/\S+$/i.test(text);const isQ=!files.length&&!isUrl&&looksLikeQuestion(text);
+  if(rec){rec.onresult=null;rec.abort()}
   if(busy){restore(text,files);return}
   const bad=problem(files);if(bad){bot(bad,"err");restore(text,files);return}
-  if(!files.length&&!isUrl&&text.length<(mode==="ask"?3:10)){bot(mode==="ask"?"Type your question first.":"Paste a longer answer (at least 10 characters), a link, or attach a file.","err");restore(text,files);return}
+  if(!files.length&&!isUrl&&text.length<(isQ?3:10)){bot("Type a question, paste an AI answer (at least 10 characters), paste a link, or attach a file.","err");restore(text,files);return}
   busy=true;$("#psend").disabled=true;
   lastQ=(isUrl?"Page: "+text:(text||("Attached: "+files.map(f=>f.name).join(", ")))).slice(0,300);
-  const t0=Date.now(),m=bot("Checking… 0s");
-  timer=setInterval(()=>{m.textContent=`Checking… ${Math.round((Date.now()-t0)/1000)}s (usually under a minute)`},1000);
+  const lab=isQ?"Getting the AI's answer and checking it":isUrl?"Reading the page and checking it":"Checking",t0=Date.now(),m=bot(lab+"… 0s");
+  timer=setInterval(()=>{m.textContent=`${lab}… ${Math.round((Date.now()-t0)/1000)}s (usually under a minute)`},1000);
   const ctl=new AbortController(),kill=setTimeout(()=>ctl.abort(),120000);
   try{
     let r;
     if(files.length){const fd=new FormData();fd.append("answer_text",text);files.forEach(f=>fd.append("files",f));r=await fetch(API+"/api/check-files",{method:"POST",body:fd,signal:ctl.signal})}
-    else{const ep=isUrl?"/api/check-url":mode==="ask"?"/api/ask":"/api/check",bd=isUrl?{url:text}:mode==="ask"?{question:text}:{answer_text:text};
+    else{const ep=isUrl?"/api/check-url":isQ?"/api/ask":"/api/check",bd=isUrl?{url:text}:isQ?{question:text}:{answer_text:text};
       r=await fetch(API+ep,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(bd),signal:ctl.signal})}
     const d=await r.json();
     if(!r.ok)throw new Error(typeof d.detail==="string"?d.detail:"Request failed");
@@ -664,24 +667,24 @@ function newChat(){
   if(busy){toast("Please wait for the current check to finish.");return}
   hide();sent.innerHTML="";ptext.value="";
   [...document.querySelectorAll("#chips button")].reverse().forEach(b=>b.click());   /* removes attached files */
-  origRep=null;pending=null;trCache={};mrow.firstChild.click();toast("New chat")}
+  origRep=null;pending=null;trCache={};if(rec){rec.onresult=null;rec.abort()}toast("New chat")}
 
-/* ---- voice input (transcribe): uses the browser's speech recognition, works in Chrome and Edge ---- */
+/* ---- voice input (transcribe): a mic inside the typing box, uses the browser's speech recognition (Chrome, Edge) ---- */
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-const mic=document.createElement("button");mic.type="button";mic.id="mic";mic.textContent="Speak";
-const vl=document.createElement("select");vl.setAttribute("aria-label","Voice language");
-for(const [v,l] of [["en-IN","English"],["hi-IN","Hindi"],["en-US","English (US)"]]){const o=document.createElement("option");o.value=v;o.textContent=l;vl.appendChild(o)}
-mrow.append(mic,vl);
+const VLANG=(navigator.language||"").toLowerCase().startsWith("hi")?"hi-IN":"en-IN";
+const mic=document.createElement("button");mic.type="button";mic.id="mic";mic.title="Voice input";mic.setAttribute("aria-label","Voice input");
+mic.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8"/></svg>';
+$("#psend").before(mic);
 let rec=null,base="";
 mic.onclick=()=>{
   if(!SR){bot("Voice input works in Chrome or Edge. Please open Yatharth in one of them.","err");return}
   if(rec){rec.stop();return}
-  rec=new SR();rec.lang=vl.value;rec.interimResults=true;rec.continuous=true;
+  rec=new SR();rec.lang=VLANG;rec.interimResults=true;rec.continuous=true;
   base=ptext.value?ptext.value.trimEnd()+" ":"";
-  rec.onresult=e=>{let t="";for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;ptext.value=base+t};
-  rec.onend=()=>{rec=null;mic.classList.remove("live");mic.textContent="Speak"};
+  rec.onresult=e=>{let s="";for(let i=0;i<e.results.length;i++)s+=e.results[i][0].transcript;ptext.value=base+s};
+  rec.onend=()=>{rec=null;mic.classList.remove("live");mic.title="Voice input"};
   rec.onerror=e=>bot(e.error==="not-allowed"?"Microphone is blocked. Allow it from the lock icon in the address bar.":"Voice input stopped ("+e.error+").","err");
-  mic.classList.add("live");mic.textContent="Stop";rec.start()};
+  mic.classList.add("live");mic.title="Stop";rec.start()};
 
 /* ---- toolbar wiring ---- */
 $("#tNew").onclick=newChat;$("#tSh").onclick=share;
